@@ -1,0 +1,32 @@
+module Icons exposing (..)
+
+import Svg exposing (..)
+import Svg.Attributes exposing (fill, d, transform, enableBackground, viewBox, width, height, x, y, cy, cx, r)
+
+
+viewUfo : { r | x : Int, y : Int } -> Svg msg
+viewUfo ufo =
+    svg
+        [ viewBox "0 0 1000 1000"
+        , enableBackground "new 0 0 1000 1000"
+        , width "10"
+        , height "10"
+        , fill "red"
+        , x (String.fromInt ufo.x)
+        , y (String.fromInt ufo.y)
+        ]
+        [ g
+            [ transform "translate(0,511) scale(0.1,-0.1)"
+            ]
+            [ path [ d "M2055.4,4285.3v-483.1h483.1h483.1v483.1v483.1h-483.1h-483.1V4285.3z" ] []
+            , path [ d "M6978.4,4285.3v-483.1h483.1h483.1v483.1v483.1h-483.1h-483.1V4285.3z" ] []
+            , path [ d "M3044.6,3284.6V2790H2550h-494.6v-483.1v-483.1h-483.1h-483.1v-494.6V834.6H594.6H100v-2196.9v-2196.9h483.1h483.1v977.7v977.7h253.1h253.1v-977.7v-977.7h483.1h483.1v483.1v483.1H5000h2461.5v-483.1v-483.1h483.1h483.1v977.7v977.7h253.1h253v-977.7v-977.7h483.1H9900v2196.9V834.6h-494.6h-494.6v494.6v494.6h-483.1h-483.1v483.1V2790H7450h-494.6v494.6v494.6h-483.1h-483.1v-494.6V2790H5000h-989.2v494.6v494.6h-483.1h-483.1V3284.6z M4033.8-143.1v-494.6h-506.1h-506.1v494.6v494.6h506.1h506.1V-143.1z M6978.4-143.1v-494.6h-506.1h-506.1v494.6v494.6h506.1h506.1V-143.1z" ] []
+            , path [ d "M2561.5-4065.4v-483.1h966.2h966.2v483.1v483.1h-966.2h-966.2V-4065.4z" ] []
+            , path [ d "M5506.1-4065.4v-483.1h966.2h966.2v483.1v483.1h-966.2h-966.2V-4065.4z" ] []
+            ]
+        ]
+
+
+viewShip : Int -> Svg msg
+viewShip x =
+    circle [ fill "white", cx (String.fromInt x), cy "200", r "10" ] []
