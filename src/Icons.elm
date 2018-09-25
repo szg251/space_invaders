@@ -30,12 +30,12 @@ viewUfo ufo =
 viewShip : Int -> Svg msg
 viewShip position =
     svg
-        [ viewBox "0 0 350 250"
+        [ viewBox "0 0 200 200"
         , fill "white"
         , x (String.fromInt position)
         , y "200"
-        , width "40"
-        , height "40"
+        , width "10"
+        , height "10"
         ]
         [ g []
             [ path [ d "M0 127h176v65H0z" ] []
