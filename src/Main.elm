@@ -4,11 +4,11 @@ import Browser
 import Browser.Events
 import Html exposing (Html, div)
 import Html.Attributes exposing (style)
-import Svg exposing (Svg, svg, g)
-import Svg.Attributes exposing (width, height, viewBox, enableBackground)
-import Json.Decode as Decode exposing (Decoder)
-import Time
 import Icons
+import Json.Decode as Decode exposing (Decoder)
+import Svg exposing (Svg, g, svg)
+import Svg.Attributes exposing (enableBackground, height, viewBox, width)
+import Time
 
 
 type alias Model =
@@ -28,8 +28,6 @@ type alias Ufo =
 type Direction
     = Left
     | Right
-    | Down
-    | Up
 
 
 init : () -> ( Model, Cmd Msg )
@@ -53,12 +51,11 @@ initUfos =
             List.range 1 5
                 |> List.map ((*) 20)
     in
-        List.concatMap (\x -> List.map (Tuple.pair x) ys) xs
-            |> List.map (\( x, y ) -> Ufo x y True)
+    List.concatMap (\x -> List.map (\y -> Ufo x y True) ys) xs
 
 
 type Msg
-    = KeyPress String
+    = KeyPress Direction
     | Tick Time.Posix
 
 
@@ -67,14 +64,11 @@ update msg model =
     case msg of
         KeyPress key ->
             case key of
-                "ArrowRight" ->
+                Right ->
                     ( { model | shipX = model.shipX + 5 }, Cmd.none )
 
-                "ArrowLeft" ->
+                Left ->
                     ( { model | shipX = model.shipX - 5 }, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none )
 
         Tick _ ->
             ( { model
@@ -91,12 +85,14 @@ stepUfo steps ufo =
         stepRem =
             remainderBy 20 steps
     in
-        if stepRem == 0 || stepRem == 10 then
-            { ufo | y = ufo.y + 10 }
-        else if 10 < stepRem then
-            { ufo | x = ufo.x - 10 }
-        else
-            { ufo | x = ufo.x + 10 }
+    if stepRem == 0 || stepRem == 10 then
+        { ufo | y = ufo.y + 10 }
+
+    else if 10 < stepRem then
+        { ufo | x = ufo.x - 10 }
+
+    else
+        { ufo | x = ufo.x + 10 }
 
 
 view : Model -> Html Msg
@@ -109,7 +105,7 @@ view model =
 viewGamePanel : Model -> Svg Msg
 viewGamePanel model =
     svg
-        [ viewBox "0 0 1000 500"
+        [ viewBox "0 0 400 300"
         , width "1000"
         , height "500"
         , style "backgroundColor" "black"
@@ -133,7 +129,22 @@ subscriptions model =
 
 decodeKeyPress : Decoder Msg
 decodeKeyPress =
-    Decode.map KeyPress (Decode.field "key" Decode.string)
+    Decode.field "key" Decode.string
+        |> Decode.andThen keyToDirection
+        |> Decode.map KeyPress
+
+
+keyToDirection : String -> Decoder Direction
+keyToDirection key =
+    case key of
+        "ArrowRight" ->
+            Decode.succeed Right
+
+        "ArrowLeft" ->
+            Decode.succeed Left
+
+        _ ->
+            Decode.fail "not a direction key"
 
 
 main : Program () Model Msg

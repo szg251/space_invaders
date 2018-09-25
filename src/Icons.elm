@@ -1,7 +1,7 @@
-module Icons exposing (..)
+module Icons exposing (viewShip, viewUfo)
 
 import Svg exposing (..)
-import Svg.Attributes exposing (fill, d, transform, enableBackground, viewBox, width, height, x, y, cy, cx, r)
+import Svg.Attributes exposing (cx, cy, d, enableBackground, fill, height, r, transform, viewBox, width, x, y)
 
 
 viewUfo : { r | x : Int, y : Int } -> Svg msg
@@ -28,5 +28,18 @@ viewUfo ufo =
 
 
 viewShip : Int -> Svg msg
-viewShip x =
-    circle [ fill "white", cx (String.fromInt x), cy "200", r "10" ] []
+viewShip position =
+    svg
+        [ viewBox "0 0 350 250"
+        , fill "white"
+        , x (String.fromInt position)
+        , y "200"
+        , width "40"
+        , height "40"
+        ]
+        [ g []
+            [ path [ d "M0 127h176v65H0z" ] []
+            , path [ d "M31 96h115v66H31z" ] []
+            , path [ d "M63 64h48v65h-48z" ] []
+            ]
+        ]
