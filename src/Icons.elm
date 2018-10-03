@@ -1,7 +1,7 @@
-module Icons exposing (viewShip, viewUfo)
+module Icons exposing (viewLaser, viewShip, viewUfo)
 
 import Svg exposing (..)
-import Svg.Attributes exposing (cx, cy, d, enableBackground, fill, height, r, transform, viewBox, width, x, y)
+import Svg.Attributes exposing (cx, cy, d, enableBackground, fill, height, r, stroke, transform, viewBox, width, x, x1, x2, y, y1, y2)
 
 
 viewUfo : { r | x : Int, y : Int } -> Svg msg
@@ -33,7 +33,7 @@ viewShip position =
         [ viewBox "0 0 200 200"
         , fill "white"
         , x (String.fromInt position)
-        , y "200"
+        , y "190"
         , width "10"
         , height "10"
         ]
@@ -43,3 +43,32 @@ viewShip position =
             , path [ d "M63 64h48v65h-48z" ] []
             ]
         ]
+
+
+viewLaser : { r | x : Int, y : Int } -> Svg msg
+viewLaser laser =
+    line
+        [ stroke "yellow"
+        , x1 (String.fromInt laser.x)
+        , y1 (String.fromInt laser.y)
+        , x2 (String.fromInt laser.x)
+        , y2 (String.fromInt (laser.y + 10))
+        ]
+        []
+
+
+
+-- svg
+--     [ viewBox "0 0 200 200"
+--     , fill "yellow"
+--     , x (String.fromInt laser.x)
+--     , y (String.fromInt laser.y)
+--     , width "10"
+--     , height "10"
+--     ]
+--     [ g []
+--         [ path [ d "M0 127h176v65H0z" ] []
+--         , path [ d "M31 96h115v66H31z" ] []
+--         , path [ d "M63 64h48v65h-48z" ] []
+--         ]
+--     ]
