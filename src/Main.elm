@@ -20,6 +20,7 @@ type alias Model =
 type AppPhase
     = Playing GameState
     | GameOver
+    | Congrats
 
 
 type alias GameState =
@@ -98,6 +99,9 @@ update msg model =
         GameOver ->
             ( model, Cmd.none )
 
+        Congrats ->
+            ( model, Cmd.none )
+
 
 insertOnce : a -> List a -> List a
 insertOnce elem list =
@@ -118,19 +122,11 @@ updateGameState msg gameState =
             Playing { gameState | activeControls = List.filter ((/=) control) gameState.activeControls }
 
         Tick _ ->
-            let
-                nextState =
-                    gameState
-                        |> evalUserControl
-                        |> evalUfoStep (gameState.steps + 1)
-                        |> Maybe.map evalHits
-            in
-            case nextState of
-                Just afterStep ->
-                    Playing afterStep
-
-                Nothing ->
-                    GameOver
+            gameState
+                |> evalUserControl
+                |> evalUfoStep (gameState.steps + 1)
+                |> evalHits
+                |> evalResults
 
 
 evalUserControl : GameState -> GameState
@@ -192,22 +188,17 @@ stepUfo tickSkip steps ufo =
         ufo
 
 
-evalUfoStep : Int -> GameState -> Maybe GameState
+evalUfoStep : Int -> GameState -> GameState
 evalUfoStep nextStep gameState =
     let
         ufoTickSkip =
             5
     in
-    if nextStep < (110 * ufoTickSkip) then
-        Just
-            { gameState
-                | steps = nextStep
-                , ufos = List.map (stepUfo ufoTickSkip nextStep) gameState.ufos
-                , lasers = stepLasers gameState.lasers
-            }
-
-    else
-        Nothing
+    { gameState
+        | steps = nextStep
+        , ufos = List.map (stepUfo ufoTickSkip nextStep) gameState.ufos
+        , lasers = stepLasers gameState.lasers
+    }
 
 
 evalHits : GameState -> GameState
@@ -218,6 +209,18 @@ evalHits ({ lasers, ufos } as gameState) =
                 |> List.unzip
     in
     { gameState | lasers = subtractList lasers laserHits, ufos = subtractList ufos ufoHits }
+
+
+evalResults : GameState -> AppPhase
+evalResults gameState =
+    if List.length gameState.ufos == 0 then
+        Congrats
+
+    else if List.foldl (\ufo lowest -> max ufo.y lowest) 0 gameState.ufos < 180 then
+        Playing gameState
+
+    else
+        GameOver
 
 
 calcHits : List Laser -> List Ufo -> List ( Laser, Ufo )
@@ -279,6 +282,14 @@ view model =
                         ]
                         [ text "Game Over" ]
                     ]
+
+                Congrats ->
+                    [ div
+                        [ style "textAlign" "center"
+                        , style "fontSize" "8rem"
+                        ]
+                        [ text "Congratulations" ]
+                    ]
     in
     div
         [ style "backgroundColor" "black"
@@ -322,6 +333,9 @@ subscriptions model =
                 ]
 
         GameOver ->
+            Sub.none
+
+        Congrats ->
             Sub.none
 
 
