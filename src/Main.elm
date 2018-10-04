@@ -1,4 +1,4 @@
-module Main exposing (AppPhase(..), GameState, Laser, Model, Msg(..), ShipAction(..), Ufo, ViewportSize, calcHits, decodeKeyPress, evalHits, evalStep, init, initUfos, keyToShipAction, main, stepLasers, stepUfo, subscriptions, subtractList, toPx, update, updateGameState, view, viewGamePanel)
+module Main exposing (main)
 
 import Browser
 import Browser.Events
@@ -27,6 +27,7 @@ type alias GameState =
     , ufos : List Ufo
     , steps : Int
     , lasers : List Laser
+    , activeControls : List UserControl
     }
 
 
@@ -46,7 +47,7 @@ type alias Ufo =
     }
 
 
-type ShipAction
+type UserControl
     = Left
     | Right
     | Fire
@@ -60,6 +61,7 @@ init _ =
                 , ufos = initUfos
                 , steps = 0
                 , lasers = []
+                , activeControls = []
                 }
       , viewportSize = { width = 600, height = 400 }
       }
@@ -82,7 +84,8 @@ initUfos =
 
 
 type Msg
-    = KeyPress ShipAction
+    = KeyDown UserControl
+    | KeyUp UserControl
     | Tick Time.Posix
 
 
@@ -96,24 +99,30 @@ update msg model =
             ( model, Cmd.none )
 
 
+insertOnce : a -> List a -> List a
+insertOnce elem list =
+    if List.member elem list then
+        list
+
+    else
+        elem :: list
+
+
 updateGameState : Msg -> GameState -> AppPhase
 updateGameState msg gameState =
     case msg of
-        KeyPress shipAction ->
-            case shipAction of
-                Right ->
-                    Playing { gameState | shipXPosition = min 290 (gameState.shipXPosition + 5) }
+        KeyDown control ->
+            Playing { gameState | activeControls = insertOnce control gameState.activeControls }
 
-                Left ->
-                    Playing { gameState | shipXPosition = max 0 (gameState.shipXPosition - 5) }
-
-                Fire ->
-                    Playing { gameState | lasers = Laser (gameState.shipXPosition + 5) 180 :: gameState.lasers }
+        KeyUp control ->
+            Playing { gameState | activeControls = List.filter ((/=) control) gameState.activeControls }
 
         Tick _ ->
             let
                 nextState =
-                    evalStep (gameState.steps + 1) gameState
+                    gameState
+                        |> evalUserControl
+                        |> evalUfoStep (gameState.steps + 1)
                         |> Maybe.map evalHits
             in
             case nextState of
@@ -122,6 +131,36 @@ updateGameState msg gameState =
 
                 Nothing ->
                     GameOver
+
+
+evalUserControl : GameState -> GameState
+evalUserControl ({ activeControls, shipXPosition, lasers } as gameState) =
+    let
+        evalLeft state =
+            if List.member Left activeControls then
+                { state | shipXPosition = max 0 (state.shipXPosition - 5) }
+
+            else
+                state
+
+        evalRight state =
+            if List.member Right activeControls then
+                { state | shipXPosition = min 290 (state.shipXPosition + 5) }
+
+            else
+                state
+
+        evalFire state =
+            if List.member Fire activeControls then
+                { state | lasers = Laser (state.shipXPosition + 5) 180 :: state.lasers }
+
+            else
+                state
+    in
+    gameState
+        |> evalLeft
+        |> evalRight
+        |> evalFire
 
 
 stepLasers : List Laser -> List Laser
@@ -153,8 +192,8 @@ stepUfo tickSkip steps ufo =
         ufo
 
 
-evalStep : Int -> GameState -> Maybe GameState
-evalStep nextStep gameState =
+evalUfoStep : Int -> GameState -> Maybe GameState
+evalUfoStep nextStep gameState =
     let
         ufoTickSkip =
             5
@@ -277,7 +316,8 @@ subscriptions model =
     case model.appPhase of
         Playing _ ->
             Sub.batch
-                [ Browser.Events.onKeyDown decodeKeyPress
+                [ Browser.Events.onKeyDown (decodeKeyPress KeyDown)
+                , Browser.Events.onKeyUp (decodeKeyPress KeyUp)
                 , Time.every 100 Tick
                 ]
 
@@ -285,15 +325,15 @@ subscriptions model =
             Sub.none
 
 
-decodeKeyPress : Decoder Msg
-decodeKeyPress =
+decodeKeyPress : (UserControl -> Msg) -> Decoder Msg
+decodeKeyPress toMsg =
     Decode.field "key" Decode.string
-        |> Decode.andThen keyToShipAction
-        |> Decode.map KeyPress
+        |> Decode.andThen keyToUserControl
+        |> Decode.map toMsg
 
 
-keyToShipAction : String -> Decoder ShipAction
-keyToShipAction key =
+keyToUserControl : String -> Decoder UserControl
+keyToUserControl key =
     case key of
         "ArrowRight" ->
             Decode.succeed Right
