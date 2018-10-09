@@ -172,7 +172,7 @@ calcHits lasers ufos =
     let
         isHit laser ufo =
             (ufo.x <= laser.x && laser.x <= ufo.x + 10)
-                && (ufo.y - 10 <= laser.y && laser.y <= ufo.y + 10)
+                && (ufo.y - 10 < laser.y && laser.y < ufo.y + 10)
     in
     doubleFoldl
         (\laser ufo hits ->

@@ -103,7 +103,7 @@ suite =
                         before =
                             { initGS
                                 | ufos = [ { x = 10, y = 10 } ]
-                                , lasers = [ { x = 10, y = 20 } ]
+                                , lasers = [ { x = 10, y = 19 } ]
                             }
 
                         after =
@@ -118,7 +118,7 @@ suite =
                         before =
                             { initGS
                                 | ufos = [ { x = 10, y = 10 } ]
-                                , lasers = [ { x = 10, y = 0 } ]
+                                , lasers = [ { x = 10, y = 1 } ]
                             }
 
                         after =
@@ -133,7 +133,7 @@ suite =
                         before =
                             { initGS
                                 | ufos = [ { x = 10, y = 10 } ]
-                                , lasers = [ { x = 20, y = 20 } ]
+                                , lasers = [ { x = 20, y = 19 } ]
                             }
 
                         after =
@@ -148,7 +148,7 @@ suite =
                         before =
                             { initGS
                                 | ufos = [ { x = 10, y = 10 } ]
-                                , lasers = [ { x = 20, y = 0 } ]
+                                , lasers = [ { x = 20, y = 1 } ]
                             }
 
                         after =
