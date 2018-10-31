@@ -73,7 +73,7 @@ updateGameState msg gameState =
         Tick _ ->
             gameState
                 |> evalUserControl
-                |> evalUfoStep (gameState.steps + 1)
+                |> evalStep
                 |> evalHits
                 |> evalResults
 
@@ -89,7 +89,7 @@ view model =
                 Playing gameState ->
                     [ row [ width fill ]
                         [ el [ centerX ] (text "Space invaders")
-                        , el [ alignRight ] (text ("Score: " ++ printScore 120))
+                        , el [ alignRight ] (text ("Score: " ++ printScore gameState.score))
                         ]
                     , row [] [ html <| viewGamePanel model.viewportSize gameState ]
                     ]
@@ -126,8 +126,8 @@ viewGamePanel viewportSize gameState =
         , Svg.Attributes.height (String.fromInt <| viewportSize.height - 70)
         , Svg.Attributes.style "backgroundColor: black"
         ]
-        (List.map Icons.viewUfo gameState.ufos
-            ++ List.map Icons.viewLaser gameState.lasers
+        (List.map Icons.viewUfo gameState.ufos.list
+            ++ List.map Icons.viewLaser gameState.lasers.list
             ++ [ Icons.viewShip gameState.shipXPosition ]
         )
 

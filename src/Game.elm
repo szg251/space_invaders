@@ -7,10 +7,22 @@ module Game exposing
     , calcHits
     , evalHits
     , evalResults
-    , evalUfoStep
+    , evalStep
     , evalUserControl
     , init
     )
+
+-- Game constants
+
+
+laserFrequency : Int
+laserFrequency =
+    8
+
+
+laserSpeed : Int
+laserSpeed =
+    2
 
 
 type AppPhase
@@ -37,22 +49,36 @@ type UserControl
     | Fire
 
 
+type alias Ufos =
+    { list : List Ufo
+    , waitStep : Int
+    , steps : Int
+    , stepFrequency : Int
+    }
+
+
+type alias Lasers =
+    { list : List Laser
+    , waitStep : Int
+    }
+
+
 type alias GameState =
     { shipXPosition : Int
-    , ufos : List Ufo
-    , steps : Int
-    , lasers : List Laser
+    , ufos : Ufos
+    , lasers : Lasers
     , activeControls : List UserControl
+    , score : Int
     }
 
 
 init : GameState
 init =
     { shipXPosition = 135
-    , ufos = initUfos
-    , steps = 0
-    , lasers = []
+    , ufos = { list = initUfos, waitStep = 0, steps = 1, stepFrequency = 20 }
+    , lasers = { list = [], waitStep = 0 }
     , activeControls = []
+    , score = 0
     }
 
 
@@ -89,7 +115,11 @@ evalUserControl ({ activeControls, shipXPosition, lasers } as gameState) =
 
         evalFire state =
             if List.member Fire activeControls then
-                { state | lasers = Laser (state.shipXPosition + 5) 180 :: state.lasers }
+                if gameState.lasers.waitStep == 0 then
+                    { state | lasers = shootLaser (state.shipXPosition + 5) state.lasers }
+
+                else
+                    state
 
             else
                 state
@@ -100,44 +130,60 @@ evalUserControl ({ activeControls, shipXPosition, lasers } as gameState) =
         |> evalFire
 
 
-stepLasers : List Laser -> List Laser
-stepLasers =
-    List.map (\laser -> { laser | y = laser.y - 10 })
-        >> List.filter (\{ y } -> y >= 0)
+shootLaser : Int -> Lasers -> Lasers
+shootLaser x lasers =
+    { lasers | list = Laser x 180 :: lasers.list, waitStep = laserFrequency }
 
 
-stepUfo : Int -> Int -> Ufo -> Ufo
-stepUfo tickSkip steps ufo =
+stepLaser : Laser -> Laser
+stepLaser laser =
+    { laser | y = laser.y - 10 }
+
+
+stepLasers : Lasers -> Lasers
+stepLasers lasers =
+    { lasers
+        | list = List.map stepLaser lasers.list |> List.filter (\{ y } -> y >= 0)
+        , waitStep = max 0 (lasers.waitStep - 1)
+    }
+
+
+stepUfo : Int -> Ufo -> Ufo
+stepUfo steps ufo =
     let
         stepsInRow =
             10
 
         currentStep =
-            remainderBy (2 * stepsInRow) (steps // tickSkip)
+            remainderBy (2 * stepsInRow) steps
     in
-    if remainderBy tickSkip steps == 0 then
-        if currentStep == 0 || currentStep == stepsInRow then
-            { ufo | y = ufo.y + 10 }
+    if currentStep == 0 || currentStep == stepsInRow then
+        { ufo | y = ufo.y + 10 }
 
-        else if stepsInRow < currentStep then
-            { ufo | x = ufo.x - 10 }
-
-        else
-            { ufo | x = ufo.x + 10 }
+    else if stepsInRow < currentStep then
+        { ufo | x = ufo.x - 10 }
 
     else
-        ufo
+        { ufo | x = ufo.x + 10 }
 
 
-evalUfoStep : Int -> GameState -> GameState
-evalUfoStep nextStep gameState =
+stepUfos : Ufos -> Ufos
+stepUfos ufos =
+    if ufos.waitStep == 0 then
+        { ufos | waitStep = ufos.stepFrequency, list = List.map (stepUfo ufos.steps) ufos.list, steps = ufos.steps + 1 }
+
+    else
+        { ufos | waitStep = ufos.waitStep - 1 }
+
+
+evalStep : GameState -> GameState
+evalStep gameState =
     let
         ufoTickSkip =
-            5
+            20
     in
     { gameState
-        | steps = nextStep
-        , ufos = List.map (stepUfo ufoTickSkip nextStep) gameState.ufos
+        | ufos = stepUfos gameState.ufos
         , lasers = stepLasers gameState.lasers
     }
 
@@ -146,21 +192,22 @@ evalHits : GameState -> GameState
 evalHits ({ lasers, ufos } as gameState) =
     let
         ( laserHits, ufoHits ) =
-            calcHits lasers ufos
+            calcHits lasers.list ufos.list
                 |> List.unzip
     in
     { gameState
-        | lasers = subtractList lasers laserHits
-        , ufos = subtractList ufos ufoHits
+        | lasers = { lasers | list = subtractList lasers.list laserHits }
+        , ufos = { ufos | list = subtractList ufos.list ufoHits }
+        , score = List.length ufoHits * 10 + gameState.score
     }
 
 
 evalResults : GameState -> AppPhase
 evalResults gameState =
-    if List.length gameState.ufos == 0 then
+    if List.length gameState.ufos.list == 0 then
         Congrats
 
-    else if List.foldl (\ufo lowest -> max ufo.y lowest) 0 gameState.ufos < 180 then
+    else if List.foldl (\ufo lowest -> max ufo.y lowest) 0 gameState.ufos.list < 180 then
         Playing gameState
 
     else
