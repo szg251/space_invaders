@@ -170,7 +170,17 @@ stepUfo steps ufo =
 stepUfos : Ufos -> Ufos
 stepUfos ufos =
     if ufos.waitStep == 0 then
-        { ufos | waitStep = ufos.stepFrequency, list = List.map (stepUfo ufos.steps) ufos.list, steps = ufos.steps + 1 }
+        { ufos
+            | waitStep = ufos.stepFrequency
+            , list = List.map (stepUfo ufos.steps) ufos.list
+            , steps = ufos.steps + 1
+            , stepFrequency =
+                if modBy 10 ufos.steps == 0 then
+                    max 0 (ufos.stepFrequency - max 0 (ufos.stepFrequency // 4))
+
+                else
+                    ufos.stepFrequency
+        }
 
     else
         { ufos | waitStep = ufos.waitStep - 1 }
