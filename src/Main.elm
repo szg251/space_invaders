@@ -46,10 +46,20 @@ update msg model =
             ( { model | appPhase = updateGameState msg gameState }, Cmd.none )
 
         GameOver ->
-            ( model, Cmd.none )
+            case msg of
+                KeyDown _ ->
+                    init ()
+
+                _ ->
+                    ( model, Cmd.none )
 
         Congrats ->
-            ( model, Cmd.none )
+            case msg of
+                KeyDown _ ->
+                    init ()
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 insertOnce : a -> List a -> List a
@@ -95,13 +105,17 @@ view model =
                     ]
 
                 GameOver ->
-                    [ row [ width fill, height fill ]
-                        [ el [ centerX, centerY, Font.size 30 ] (text "Game Over") ]
+                    [ column [ width fill, height fill ]
+                        [ el [ centerX, centerY, Font.size 30 ] (text "Game Over")
+                        , el [ centerX ] (text "Press any key to restart")
+                        ]
                     ]
 
                 Congrats ->
-                    [ row [ width fill, height fill ]
-                        [ el [ centerX, centerY, Font.size 30 ] (text "Congratulations") ]
+                    [ column [ width fill, height fill ]
+                        [ el [ centerX, centerY, Font.size 30 ] (text "Congratulations")
+                        , el [ centerX ] (text "Press any key to restart")
+                        ]
                     ]
     in
     layout []
@@ -143,10 +157,14 @@ subscriptions model =
                 ]
 
         GameOver ->
-            Sub.none
+            Sub.batch
+                [ Browser.Events.onKeyDown (decodeKeyPress KeyDown)
+                ]
 
         Congrats ->
-            Sub.none
+            Sub.batch
+                [ Browser.Events.onKeyDown (decodeKeyPress KeyDown)
+                ]
 
 
 decodeKeyPress : (UserControl -> Msg) -> Decoder Msg
