@@ -180,12 +180,7 @@ stepUfos ufos =
             | waitStep = ufos.stepFrequency
             , list = List.map (stepUfo ufos.steps) ufos.list
             , steps = ufos.steps + 1
-            , stepFrequency =
-                if modBy 10 ufos.steps == 0 then
-                    max 0 (ufos.stepFrequency - max 0 (ufos.stepFrequency // 4))
-
-                else
-                    ufos.stepFrequency
+            , stepFrequency = List.length ufos.list // 2
         }
 
     else
@@ -230,7 +225,7 @@ evalResults gameState =
                 , startPosition = gameState.startPosition + 30
             }
 
-    else if List.foldl (\ufo lowest -> max ufo.y lowest) 0 gameState.ufos.list < 180 then
+    else if List.foldl (\ufo lowest -> max ufo.y lowest) 0 gameState.ufos.list < 190 then
         Playing gameState
 
     else
