@@ -68,6 +68,7 @@ type alias GameState =
     , ufos : Ufos
     , lasers : Lasers
     , activeControls : List UserControl
+    , startPosition : Int
     , score : Int
     }
 
@@ -75,15 +76,16 @@ type alias GameState =
 init : GameState
 init =
     { shipXPosition = 135
-    , ufos = { list = initUfos, waitStep = 0, steps = 1, stepFrequency = 20 }
+    , ufos = initUfos 0
     , lasers = { list = [], waitStep = 0 }
     , activeControls = []
+    , startPosition = 0
     , score = 0
     }
 
 
-initUfos : List Ufo
-initUfos =
+initUfos : Int -> Ufos
+initUfos startPosition =
     let
         xs =
             List.range 0 10
@@ -91,9 +93,13 @@ initUfos =
 
         ys =
             List.range 0 4
-                |> List.map ((*) 20)
+                |> List.map ((*) 20 >> (+) startPosition)
     in
-    List.concatMap (\x -> List.map (\y -> Ufo x y) ys) xs
+    { list = List.concatMap (\x -> List.map (\y -> Ufo x y) ys) xs
+    , waitStep = 0
+    , steps = 1
+    , stepFrequency = 20
+    }
 
 
 evalUserControl : GameState -> GameState
@@ -214,8 +220,15 @@ evalHits ({ lasers, ufos } as gameState) =
 
 evalResults : GameState -> AppPhase
 evalResults gameState =
-    if List.length gameState.ufos.list == 0 then
+    if gameState.startPosition >= 120 then
         Congrats
+
+    else if List.length gameState.ufos.list == 0 then
+        Playing
+            { gameState
+                | ufos = initUfos (gameState.startPosition + 30)
+                , startPosition = gameState.startPosition + 30
+            }
 
     else if List.foldl (\ufo lowest -> max ufo.y lowest) 0 gameState.ufos.list < 180 then
         Playing gameState
