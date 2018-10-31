@@ -2,13 +2,15 @@ module Main exposing (main)
 
 import Browser
 import Browser.Events
+import Element exposing (..)
+import Element.Background as Background
+import Element.Font as Font
 import Game exposing (..)
-import Html exposing (Html, div, text)
-import Html.Attributes exposing (style)
+import Html exposing (Html)
 import Icons
 import Json.Decode as Decode exposing (Decoder)
 import Svg exposing (Svg, g, svg)
-import Svg.Attributes exposing (enableBackground, height, viewBox, width)
+import Svg.Attributes
 import Time
 
 
@@ -79,57 +81,50 @@ updateGameState msg gameState =
 view : Model -> Html Msg
 view model =
     let
+        printScore score =
+            score |> String.fromInt |> String.padLeft 5 '0'
+
         children =
             case model.appPhase of
                 Playing gameState ->
-                    [ div
-                        [ style "textAlign" "center"
-                        , style "paddingBottom" "20px"
+                    [ row [ width fill ]
+                        [ el [ centerX ] (text "Space invaders")
+                        , el [ alignRight ] (text ("Score: " ++ printScore 120))
                         ]
-                        [ text "Space Invaders" ]
-                    , viewGamePanel model.viewportSize gameState
+                    , row [] [ html <| viewGamePanel model.viewportSize gameState ]
                     ]
 
                 GameOver ->
-                    [ div
-                        [ style "textAlign" "center"
-                        , style "fontSize" "8rem"
-                        ]
-                        [ text "Game Over" ]
+                    [ row [ width fill, height fill ]
+                        [ el [ centerX, centerY, Font.size 30 ] (text "Game Over") ]
                     ]
 
                 Congrats ->
-                    [ div
-                        [ style "textAlign" "center"
-                        , style "fontSize" "8rem"
-                        ]
-                        [ text "Congratulations" ]
+                    [ row [ width fill, height fill ]
+                        [ el [ centerX, centerY, Font.size 30 ] (text "Congratulations") ]
                     ]
     in
-    div
-        [ style "backgroundColor" "black"
-        , style "color" "white"
-        , style "width" (toPx <| model.viewportSize.width)
-        , style "height" (toPx <| model.viewportSize.height)
-        , style "padding" "20px"
-        , style "display" "inline-block"
-        , style "fontFamily" "Courier New"
-        ]
-        children
-
-
-toPx : Int -> String
-toPx number =
-    String.fromInt number |> (\x -> x ++ "px")
+    layout []
+        (column
+            [ Background.color (rgb255 0 0 0)
+            , Font.color (rgb255 200 200 200)
+            , Font.family [ Font.typeface "Courier New", Font.monospace ]
+            , width (px model.viewportSize.width)
+            , height (px model.viewportSize.height)
+            , spacing 10
+            , padding 20
+            ]
+            children
+        )
 
 
 viewGamePanel : ViewportSize -> GameState -> Svg Msg
 viewGamePanel viewportSize gameState =
     svg
-        [ viewBox "0 0 300 200"
-        , width (String.fromInt <| viewportSize.width - 40)
-        , height (String.fromInt <| viewportSize.height - 40)
-        , style "backgroundColor" "black"
+        [ Svg.Attributes.viewBox "0 0 300 200"
+        , Svg.Attributes.width (String.fromInt <| viewportSize.width - 40)
+        , Svg.Attributes.height (String.fromInt <| viewportSize.height - 70)
+        , Svg.Attributes.style "backgroundColor: black"
         ]
         (List.map Icons.viewUfo gameState.ufos
             ++ List.map Icons.viewLaser gameState.lasers
@@ -144,7 +139,7 @@ subscriptions model =
             Sub.batch
                 [ Browser.Events.onKeyDown (decodeKeyPress KeyDown)
                 , Browser.Events.onKeyUp (decodeKeyPress KeyUp)
-                , Time.every 100 Tick
+                , Time.every 50 Tick
                 ]
 
         GameOver ->
