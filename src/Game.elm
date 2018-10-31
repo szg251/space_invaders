@@ -26,7 +26,8 @@ laserSpeed =
 
 
 type AppPhase
-    = Playing GameState
+    = Welcome
+    | Playing GameState
     | GameOver
     | Congrats
 

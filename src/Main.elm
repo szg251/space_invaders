@@ -26,7 +26,7 @@ type alias ViewportSize =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { appPhase = Playing Game.init
+    ( { appPhase = Welcome
       , viewportSize = { width = 600, height = 400 }
       }
     , Cmd.none
@@ -42,13 +42,21 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case model.appPhase of
+        Welcome ->
+            case msg of
+                KeyDown _ ->
+                    ( { model | appPhase = Playing Game.init }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
         Playing gameState ->
             ( { model | appPhase = updateGameState msg gameState }, Cmd.none )
 
         GameOver ->
             case msg of
                 KeyDown _ ->
-                    init ()
+                    ( { model | appPhase = Playing Game.init }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -56,7 +64,7 @@ update msg model =
         Congrats ->
             case msg of
                 KeyDown _ ->
-                    init ()
+                    ( { model | appPhase = Playing Game.init }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -96,6 +104,13 @@ view model =
 
         children =
             case model.appPhase of
+                Welcome ->
+                    [ column [ width fill, height fill ]
+                        [ el [ centerX, centerY, Font.size 60, Font.center ] (text "Space\nInvaders")
+                        , el [ centerX ] (text "Press any key to start")
+                        ]
+                    ]
+
                 Playing gameState ->
                     [ row [ width fill ]
                         [ el [ centerX ] (text "Space invaders")
@@ -149,6 +164,11 @@ viewGamePanel viewportSize gameState =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.appPhase of
+        Welcome ->
+            Sub.batch
+                [ Browser.Events.onKeyDown (decodeKeyPress KeyDown)
+                ]
+
         Playing _ ->
             Sub.batch
                 [ Browser.Events.onKeyDown (decodeKeyPress KeyDown)
