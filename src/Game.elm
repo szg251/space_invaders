@@ -223,12 +223,30 @@ evalStep ( gameState, sounds ) =
     let
         ufoTickSkip =
             20
+
+        getStepSound { steps, waitStep } =
+            case modBy 4 steps of
+                0 ->
+                    Sound.UfoStep1
+
+                1 ->
+                    Sound.UfoStep2
+
+                2 ->
+                    Sound.UfoStep3
+
+                _ ->
+                    Sound.UfoStep4
     in
     ( { gameState
         | ufos = stepUfos gameState.ufos
         , lasers = stepLasers gameState.lasers
       }
-    , sounds
+    , if gameState.ufos.waitStep == 0 then
+        getStepSound gameState.ufos :: sounds
+
+      else
+        sounds
     )
 
 
