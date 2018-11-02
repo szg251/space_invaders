@@ -9,9 +9,13 @@
     "build": "webpack --mode=production"
   },
   "devDependencies": {
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "babel-loader": "^8.0.4",
     "copy-webpack-plugin": "^4.6.0",
     "elm-webpack-loader": "^5.0.0",
     "file-loader": "^2.0.0",
+    "uglifyjs-webpack-plugin": "^2.0.1",
     "webpack": "^4.23.1",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.1.10"
