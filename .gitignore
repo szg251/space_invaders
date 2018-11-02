@@ -1,2 +1,4 @@
-elm-stuff
-index.html
+node_modules/
+elm-stuff/
+dist/
+
