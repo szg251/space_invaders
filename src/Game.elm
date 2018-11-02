@@ -2,6 +2,7 @@ module Game exposing
     ( AppPhase(..)
     , GameState
     , Laser
+    , Msg(..)
     , Ufo
     , UserControl(..)
     , calcHits
@@ -10,7 +11,17 @@ module Game exposing
     , evalStep
     , evalUserControl
     , init
+    , subscriptions
+    , update
     )
+
+import Browser.Events
+import GenericSet exposing (GenericSet)
+import Json.Decode as Decode exposing (Decoder)
+import Sound exposing (Sound)
+import Time
+
+
 
 -- Game constants
 
@@ -23,6 +34,12 @@ laserFrequency =
 laserSpeed : Int
 laserSpeed =
     2
+
+
+type Msg
+    = KeyDown UserControl
+    | KeyUp UserControl
+    | Tick Time.Posix
 
 
 type AppPhase
@@ -68,7 +85,7 @@ type alias GameState =
     { shipXPosition : Int
     , ufos : Ufos
     , lasers : Lasers
-    , activeControls : List UserControl
+    , activeControls : GenericSet UserControl
     , startPosition : Int
     , score : Int
     }
@@ -79,10 +96,27 @@ init =
     { shipXPosition = 135
     , ufos = initUfos 0
     , lasers = { list = [], waitStep = 0 }
-    , activeControls = []
+    , activeControls = GenericSet.empty
     , startPosition = 0
     , score = 0
     }
+
+
+update : Msg -> GameState -> ( AppPhase, List Sound )
+update msg gameState =
+    case msg of
+        KeyDown control ->
+            ( Playing { gameState | activeControls = GenericSet.insert control gameState.activeControls }, [] )
+
+        KeyUp control ->
+            ( Playing { gameState | activeControls = GenericSet.remove control gameState.activeControls }, [] )
+
+        Tick _ ->
+            ( gameState, [] )
+                |> evalUserControl
+                |> evalStep
+                |> evalHits
+                |> Tuple.mapFirst evalResults
 
 
 initUfos : Int -> Ufos
@@ -103,35 +137,31 @@ initUfos startPosition =
     }
 
 
-evalUserControl : GameState -> GameState
-evalUserControl ({ activeControls, shipXPosition, lasers } as gameState) =
+evalUserControl : ( GameState, List Sound ) -> ( GameState, List Sound )
+evalUserControl ( { activeControls, shipXPosition, lasers } as oldState, oldSounds ) =
     let
-        evalLeft state =
-            if List.member Left activeControls then
-                { state | shipXPosition = max 0 (state.shipXPosition - 5) }
+        evalLeft ( state, sounds ) =
+            if GenericSet.member Left activeControls then
+                ( { state | shipXPosition = max 0 (state.shipXPosition - 5) }, sounds )
 
             else
-                state
+                ( state, sounds )
 
-        evalRight state =
-            if List.member Right activeControls then
-                { state | shipXPosition = min 290 (state.shipXPosition + 5) }
-
-            else
-                state
-
-        evalFire state =
-            if List.member Fire activeControls then
-                if gameState.lasers.waitStep == 0 then
-                    { state | lasers = shootLaser (state.shipXPosition + 5) state.lasers }
-
-                else
-                    state
+        evalRight ( state, sounds ) =
+            if GenericSet.member Right activeControls then
+                ( { state | shipXPosition = min 290 (state.shipXPosition + 5) }, sounds )
 
             else
-                state
+                ( state, sounds )
+
+        evalFire ( state, sounds ) =
+            if GenericSet.member Fire activeControls && state.lasers.waitStep == 0 then
+                ( { state | lasers = shootLaser (state.shipXPosition + 5) state.lasers }, Sound.Fire :: sounds )
+
+            else
+                ( state, sounds )
     in
-    gameState
+    ( oldState, oldSounds )
         |> evalLeft
         |> evalRight
         |> evalFire
@@ -188,30 +218,41 @@ stepUfos ufos =
         { ufos | waitStep = ufos.waitStep - 1 }
 
 
-evalStep : GameState -> GameState
-evalStep gameState =
+evalStep : ( GameState, List Sound ) -> ( GameState, List Sound )
+evalStep ( gameState, sounds ) =
     let
         ufoTickSkip =
             20
     in
-    { gameState
+    ( { gameState
         | ufos = stepUfos gameState.ufos
         , lasers = stepLasers gameState.lasers
-    }
+      }
+    , sounds
+    )
 
 
-evalHits : GameState -> GameState
-evalHits ({ lasers, ufos } as gameState) =
+evalHits : ( GameState, List Sound ) -> ( GameState, List Sound )
+evalHits ( { lasers, ufos } as gameState, sounds ) =
     let
         ( laserHits, ufoHits ) =
             calcHits lasers.list ufos.list
                 |> List.unzip
+
+        hits =
+            List.length ufoHits
     in
-    { gameState
+    ( { gameState
         | lasers = { lasers | list = subtractList lasers.list laserHits }
         , ufos = { ufos | list = subtractList ufos.list ufoHits }
-        , score = List.length ufoHits * 10 + gameState.score
-    }
+        , score = hits * 10 + gameState.score
+      }
+    , if hits > 0 then
+        Sound.Hit :: sounds
+
+      else
+        sounds
+    )
 
 
 evalResults : GameState -> AppPhase
@@ -252,8 +293,40 @@ calcHits lasers ufos =
         ufos
 
 
+subscriptions : Sub Msg
+subscriptions =
+    Sub.batch
+        [ Browser.Events.onKeyDown (decodeKeyPress KeyDown)
+        , Browser.Events.onKeyUp (decodeKeyPress KeyUp)
+        , Time.every 50 Tick
+        ]
+
+
 
 -- Helpers
+
+
+decodeKeyPress : (UserControl -> Msg) -> Decoder Msg
+decodeKeyPress toMsg =
+    Decode.field "key" Decode.string
+        |> Decode.andThen keyToUserControl
+        |> Decode.map toMsg
+
+
+keyToUserControl : String -> Decoder UserControl
+keyToUserControl key =
+    case key of
+        "ArrowRight" ->
+            Decode.succeed Right
+
+        "ArrowLeft" ->
+            Decode.succeed Left
+
+        " " ->
+            Decode.succeed Fire
+
+        _ ->
+            Decode.fail "not a direction key"
 
 
 doubleFoldl : (a -> b -> List c -> List c) -> List a -> List b -> List c

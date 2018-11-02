@@ -1,4 +1,5 @@
 const path = require("path")
+const CopyWebpackPlugin = require("copy-webpack-plugin")
 
 module.exports = (_env, args) => ({
   entry: path.resolve(__dirname, "index.js"),
@@ -26,5 +27,6 @@ module.exports = (_env, args) => ({
         }
       }
     ]
-  }
+  },
+  plugins: [new CopyWebpackPlugin([{ from: "./assets/audio/*.wav", to: "" }])]
 })
