@@ -116,7 +116,7 @@ update msg gameState =
                 |> evalUserControl
                 |> evalStep
                 |> evalHits
-                |> Tuple.mapFirst evalResults
+                |> evalResults
 
 
 initUfos : Int -> Ufos
@@ -273,23 +273,25 @@ evalHits ( { lasers, ufos } as gameState, sounds ) =
     )
 
 
-evalResults : GameState -> AppPhase
-evalResults gameState =
+evalResults : ( GameState, List Sound ) -> ( AppPhase, List Sound )
+evalResults ( gameState, sounds ) =
     if gameState.startPosition >= 120 then
-        Congrats
+        ( Congrats, sounds )
 
     else if List.length gameState.ufos.list == 0 then
-        Playing
+        ( Playing
             { gameState
                 | ufos = initUfos (gameState.startPosition + 30)
                 , startPosition = gameState.startPosition + 30
             }
+        , sounds
+        )
 
     else if List.foldl (\ufo lowest -> max ufo.y lowest) 0 gameState.ufos.list < 190 then
-        Playing gameState
+        ( Playing gameState, sounds )
 
     else
-        GameOver
+        ( GameOver, Sound.Explode :: sounds )
 
 
 calcHits : List Laser -> List Ufo -> List ( Laser, Ufo )
