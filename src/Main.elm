@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Dom
 import Browser.Events
 import Element exposing (..)
 import Element.Background as Background
@@ -13,6 +14,7 @@ import Json.Decode as Decode exposing (Decoder)
 import Sound
 import Svg exposing (Svg, g, svg)
 import Svg.Attributes
+import Task
 import Time
 
 
@@ -27,13 +29,20 @@ type alias ViewportSize =
     { width : Int, height : Int }
 
 
+toViewportSize : Browser.Dom.Viewport -> ViewportSize
+toViewportSize { viewport } =
+    { width = floor viewport.width
+    , height = floor viewport.height
+    }
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { appPhase = Welcome
       , viewportSize = { width = 600, height = 400 }
       , isMuted = True
       }
-    , Cmd.none
+    , Task.perform (ViewportResize << toViewportSize) Browser.Dom.getViewport
     )
 
 
@@ -41,6 +50,7 @@ type Msg
     = GameMsg Game.Msg
     | KeyPress
     | ToggleMute
+    | ViewportResize ViewportSize
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -69,6 +79,9 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        ViewportResize size ->
+            ( { model | viewportSize = size }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -151,12 +164,19 @@ viewGamePanel viewportSize gameState =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model.appPhase of
-        Playing _ ->
-            Game.subscriptions |> Sub.map GameMsg
+    let
+        phaseDependentSubs =
+            case model.appPhase of
+                Playing _ ->
+                    Game.subscriptions |> Sub.map GameMsg
 
-        _ ->
-            Browser.Events.onKeyDown (Decode.succeed KeyPress)
+                _ ->
+                    Browser.Events.onKeyDown (Decode.succeed KeyPress)
+    in
+    Sub.batch
+        [ phaseDependentSubs
+        , Browser.Events.onResize (\width height -> ViewportResize { width = width, height = height })
+        ]
 
 
 main : Program () Model Msg
