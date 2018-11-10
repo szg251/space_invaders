@@ -11,38 +11,19 @@ empty =
 
 
 insert : a -> GenericSet a -> GenericSet a
-insert element genSet =
-    let
-        list =
-            unwrap genSet
-    in
-    if List.member element list then
-        genSet
+insert element (GenericSet genSet) =
+    if List.member element genSet then
+        GenericSet genSet
 
     else
-        GenericSet (element :: list)
+        GenericSet (element :: genSet)
 
 
 remove : a -> GenericSet a -> GenericSet a
-remove element genSet =
-    let
-        list =
-            unwrap genSet
-    in
-    GenericSet (List.filter ((/=) element) list)
+remove element (GenericSet genSet) =
+    GenericSet (List.filter ((/=) element) genSet)
 
 
 member : a -> GenericSet a -> Bool
-member element genSet =
-    let
-        list =
-            unwrap genSet
-    in
-    List.member element list
-
-
-unwrap : GenericSet a -> List a
-unwrap genSet =
-    case genSet of
-        GenericSet list ->
-            list
+member element (GenericSet genSet) =
+    List.member element genSet
