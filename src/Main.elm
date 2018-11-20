@@ -84,6 +84,16 @@ update msg model =
             ( { model | viewportSize = size }, Cmd.none )
 
 
+fontUnscii8 : Element.Attribute Msg
+fontUnscii8 =
+    Font.family [ Font.external { name = "unscii-8", url = "/assets/font/unscii-8.woff" }, Font.monospace ]
+
+
+fontUnscii16 : Element.Attribute Msg
+fontUnscii16 =
+    Font.family [ Font.external { name = "unscii-16", url = "/assets/font/unscii-16.woff" }, Font.monospace ]
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -100,7 +110,7 @@ view model =
         children =
             case model.appPhase of
                 Welcome ->
-                    [ el [ centerX, centerY, Font.size 60, Font.center ] (text "Space\nInvaders")
+                    [ el [ centerX, centerY, fontUnscii16, Font.size 60, Font.center ] (text "Space\nInvaders")
                     , el [ centerX ] (text "Press any key to start")
                     ]
 
@@ -113,12 +123,12 @@ view model =
                     ]
 
                 GameOver ->
-                    [ el [ centerX, centerY, Font.size 30 ] (text "Game Over")
+                    [ el [ centerX, centerY, fontUnscii16, Font.size 30 ] (text "Game Over")
                     , el [ centerX ] (text "Press any key to restart")
                     ]
 
                 Congrats ->
-                    [ el [ centerX, centerY, Font.size 30 ] (text "Congratulations")
+                    [ el [ centerX, centerY, fontUnscii16, Font.size 30 ] (text "Congratulations")
                     , el [ centerX ] (text "Press any key to restart")
                     ]
     in
@@ -126,7 +136,7 @@ view model =
         (column
             [ Background.color (rgb255 0 0 0)
             , Font.color (rgb255 200 200 200)
-            , Font.family [ Font.typeface "Courier New", Font.monospace ]
+            , fontUnscii8
             , width (px model.viewportSize.width)
             , height (px model.viewportSize.height)
             , spacing 10
