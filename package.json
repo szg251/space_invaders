@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "webpack-dev-server --mode=development",
-    "build": "webpack --mode=production"
+    "build": "webpack --mode=production",
+    "now": "npm run build && now ./dist -n space_invaders"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",
@@ -16,7 +17,7 @@
     "elm-webpack-loader": "^5.0.0",
     "file-loader": "^2.0.0",
     "uglifyjs-webpack-plugin": "^2.0.1",
-    "webpack": "^4.23.1",
+    "webpack": "^4.19.1",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.1.10"
   }
