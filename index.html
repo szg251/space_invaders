@@ -1,16 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Space Invaders</title>
-</head>
+    <style>
+      @font-face {
+        font-family: "unscii-8";
+        font-style: normal;
+        font-weight: 400;
+        src: local("unscii 8"), local("unscii-8"),
+          url(font/unscii-16.woff) format("woff");
+      }
 
-<body>
+      @font-face {
+        font-family: "unscii-16";
+        font-style: normal;
+        font-weight: 400;
+        src: local("unscii 16"), local("unscii-16"),
+          url(font/unscii-16.woff) format("woff");
+      }
+    </style>
+  </head>
+
+  <body>
     <div id="elm-node" />
     <script src="main.js"></script>
-</body>
-
+  </body>
 </html>

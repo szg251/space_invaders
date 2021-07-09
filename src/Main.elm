@@ -86,12 +86,18 @@ update msg model =
 
 fontUnscii8 : Element.Attribute Msg
 fontUnscii8 =
-    Font.family [ Font.external { name = "unscii-8", url = "/assets/font/unscii-8.woff" }, Font.monospace ]
+    Font.family
+        [ Font.typeface "unscii-8"
+        , Font.monospace
+        ]
 
 
 fontUnscii16 : Element.Attribute Msg
 fontUnscii16 =
-    Font.family [ Font.external { name = "unscii-16", url = "/assets/font/unscii-16.woff" }, Font.monospace ]
+    Font.family
+        [ Font.typeface "unscii-16"
+        , Font.monospace
+        ]
 
 
 view : Model -> Html Msg
